@@ -66,44 +66,6 @@ Change Log:
 
 
 /*-------------------------------------------------------------------------
-*函数：irq_timer1  16ms定时中断
-*参数：无  
-*返回值：无
-*-------------------------------------------------------------------------*/
-void irq_timer1(void) interrupt 3
-{
-
-   if((mReceivePackage.RecvCount!=0)||(mReceivePackage.RecvStatus!=UART0_IDLE))            //串口通讯超时
-	{
-		mTimer.uartTimeCount++;
-		if (mTimer.uartTimeCount == 20)
-		{
-			mReceivePackage.RecvCount = 0;
-			mReceivePackage.RecvStatus = UART0_IDLE;
-			TR1 = 0;
-			mTimer.uartTimeCount = 0;
-		}
-	}
-	if(mSysParam.isButtonTone==1)														   //按键音
-	{
-		mTimer.ButtonToneTime--;
-		if(mTimer.ButtonToneTime==0)
-		{
-			xPWMCN &= ~0x10;				
-			mSysParam.isButtonTone=0;
-		}
-	}
-    if (mSqParam.Scan==1&&mSqParam.ScanHould==2)                                           //扫描等侯超时继续扫描
-    {
-		mTimer.ScanHouldTime--;
-		if (mTimer.ScanHouldTime==0)
-		{
-			mSqParam.ScanHould = 1;
-			mTimer.ScanHouldTime = SCAN_HOULD_TIME;
-		}		
-    }    
-}
-/*-------------------------------------------------------------------------
 *函数：PowerOnShow  开机显示全屏后显示国家然后进入信道模式并进入接收
 *参数：无
 *返回值：无
@@ -178,6 +140,7 @@ void main()
 	RX_P=1;
 	PowerOnComKey();
 	SET_AT_MUTE;
+	mTimer.TkCyclTime = TK_CYCL_TIME;
 	mTimer.TkCyclTime = TK_CYCL_TIME;
   while(1)
 	{

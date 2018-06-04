@@ -1,5 +1,6 @@
 #include "system.h"
-
+#include "Timer.h"
+#include "Menu.h"
 
 
 
@@ -66,4 +67,16 @@ void irq_timer1(void) interrupt 3
 	{
 		mKey.KeyComboLimit = KEY_COMBOlIMIT;
 	}
+	/*----------------------…®√ËÕ£¡Ù≥¨ ±-----------------*/
+	if (mSqParam.Scan==1&&mSqParam.ScanHould==2)                                           //…®√Ëµ»∫Ó≥¨ ±ºÃ–¯…®√Ë
+	{
+		mTimer.ScanHouldTime--;
+		if (mTimer.ScanHouldTime==0)
+		{
+			mSqParam.ScanHould = 1;
+			mTimer.ScanHouldTime = SCAN_HOULD_TIME;
+		}		
+	}
 }
+
+

@@ -229,12 +229,27 @@ typedef struct
 
 typedef struct
 {
+	unsigned int Back_Channel_Time;
 	unsigned int uartTimeCount;
 	unsigned int ButtonToneTime;
 	unsigned int TkCyclTime;
 	unsigned int ScanHouldTime;
 }tTimer;
 
+typedef struct
+{
+	unsigned char KeyIndex1;	      //KEY1 AD值 索引
+	unsigned char Power_Time;	//电源键长按时长
+	unsigned char DoublePress_Limit;	//双击时限
+	unsigned char DoublePress_Count;  //双击次数
+	unsigned char Press_Count;          //按键次数
+	unsigned char MutePress_Timelimit;  //静音（电源）长按时长
+	unsigned char MuteDoublePress_Timelimit;  //静音（电源）双击时限
+	unsigned char LongPress_Time;          //长按SQ切换时长
+	unsigned char MutePress_Count;      //电源按键次数
+	unsigned char KeyComboLimit;        //组合键限时
+	unsigned char isKeyCombo;
+}tKey;
 
 typedef struct
 {
@@ -320,7 +335,7 @@ typedef struct
 	unsigned char isLock;			      //是否锁键
 	unsigned char emgIndex;		    //紧急信道标识
 	unsigned char isTx;			        //发射状态
-	
+	unsigned char isBackChannel;
 	unsigned char keyCombSQUP;     //组合键切换按键音
 	unsigned char keyCombSQDN;     //组合键切换屏颜色
 
@@ -337,7 +352,7 @@ extern uchar mUartCmd;
 extern tReceivePackage mReceivePackage;
 extern tVoltageSend mVoltageSend;
 extern tMenu mMenu;
-
+extern xdata tKey mKey;
 /*----------------------vco相关-----------------*/
 
 void SystemInit(void);
