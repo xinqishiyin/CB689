@@ -1,0 +1,240 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              06/02/2018 13:38:48 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTEND 
+                    -TABS(2)
+
+line level    source
+
+   1          #include "SC51F2832.H"
+   2          #include "system.h"
+   3          #include "key.h"
+   4          #include "memory.h"
+   5          #include "BK4802.h"
+   6          #include "handler.h"
+   7          #include "lcdshow.h"
+   8          #include "Menu.h"
+   9          #include "uart.h"
+  10          #include "vco.h"
+  11          
+  12          /***************************************************************************************************
+  13           
+  14          Copyright (C), 2018.CB689: 
+  15          Author: ³ÂÐËÆð: Date:2018-6-20 
+  16          Description: CB689£¬CB»úÓÃiic¶ÁÐ´24c08´æ´¢Æ÷ºÍ4802Ð¾Æ¬¡£4802ÔÚFMÄ£Ê½Ê±·¢ÉäÓë½ÓÊÕÍ¬ÆµÂÊ£¬ÔÚAMÄ£Ê½Ê±½ÓÊÕÎª·¢
+             -Éä+ÖÐÆµ£¨10.7M£©
+  17          Others: ÓÉÓÚ4802 35-38MÎªÃ¤ÇøÍ¨¹ýÊÔÑéµÃ³ö¹«Ê½£¬35M-42MÆµ¶ÎÆµÆ«ÔÚ100HzÒÔÄÚ
+  18          History:
+  19          2018-4-13£º¿ªÊ¼±àÐ´
+  20          4-18£ºdelayus ÑÓÊ±Îª 6.5us  delaymsÎª1.00ms
+  21          4-21:ËøÆµÍê³É£¬µ«4802ÔÚ·¢ÉäÊ±²»ÄÜÐ´REG4
+  22          4-23:Ã¤ÇøÎÊÌâ½â¾ö£¬ ÔÚ25-32MÊ±  mVcoParam.NDIV_FRE=128   REG2 Ð´0xc000   ÔÚ35-42MÊ± REG2Ð´ 0xa000   25-32M
+             -°´×ÊÁÏÌá¹©µÄ¹«Ê½¼ÆËãµÃ³ö£¬
+  23             35-42M¾­¹ýÊÔÑéµÃ³ö¹«Ê½(26.5078+((temp+IF)-38.556)*20/29.095)*mVcoParam.NDIV_FRE*8388608/21.7£¬ÔÚ40.8MÊ±Æ
+             -µÆ«Îª-300  ÔÚ35.8MÊ±ÆµÆ«Îª+300
+  24          4-25:´®¿ÚÍ¨Ñ¶ÒÑÍ¨£¬¿É¶ÁµçÑ¹Öµ ¶ÁÖ¸ÁîÎª FE 01 00
+  25          4-25:LCDÏÔÊ¾  1¡¢xSYSCFG|=0x30; //¿ªÆôRCTÊ±ÖÓÓÃÓÚLCD   2¡¢RTCSEL = 0x04;  RTCDATA|=0x01;  //¿ªÆôRCTÊ±ÖÓÓÃÓÚ
+             -LCD  3¡¢xLCDPEN1 = 0xff;      
+  26             IO¿Ú¸´ÓÃÓÚLCD COM ºÍ SEG 
+  27          4-27:ÌìÆøÔ¤±¨Æµ¶Î 161.755-163.275     mVcoParam.NDIV_FRE=24  REG2Ð´0x2000  
+  28          5-15:²Ëµ¥²¹È«£¬×éºÏ¼ü¡¢¿ª»ú×éºÏ¼ü¡¢¿ª»úÖØÆôµÈ³ÌÐò²¹È«
+  29          5-17:Ð´Æµ×¼±¸¹¤×÷Íê³É£¬¶ÁÐ´´æ´¢Æ÷Õý³£¡£  Ï¸»¯½ÓÊÕÆµÆ«¿ØÖÆÔÚ100HzÄÚ
+  30          5-18:½ÓÊÕ²âÊÔ£¬×ÊÁÏ¸øµÄ¼Ä´æÆ÷ÎÞ·¨½ÓÊÕ£¬ÎÊÁË¼¼ÊõÖ§³Ö²¢µÃµ½ÁË¿É½ÓÊÕ¼Ä´æÆ÷ÅäÖÃ£¬µ«·¢ÉäÓë½ÓÊÕÆµ²î140K£¬Ã¤ÇøÆµÂ
+             -Ê°´¹«Ê½ÓÐ±ä¡£ÖØÐÂµ÷Õû¡£
+  31          5-22:4802·¢ÉäÒôÆµÆµÆ«REG<2>b04-b00,·¢ÉäÒôÆµÏÞÖÆÎªREG<15>b12-b00
+  32          [2018/05/23  16:52 ³ÂÐËÆð]:AMÄ£Ê½Ê± ·¢ÉäÊ± 4802·¢Éä³öËùÐèÆµÂÊ  ½ÓÊÕÊ± 4802·¢Éä³ö £¨ËùÐèÆµÂÊ+10.7M£©ÐÞ¸ÄÍê³
+             -É
+  33          [2018/05/31 14:48 XingqiChen]:¸ù¾ÝËµÃ÷Êé£¬1¡¢Ìí¼ÓVOXÉÁË¸
+  34                                2¡¢PTYÓ¦¼±ÐÅµÀÉÁË¸
+  35                                3¡¢PPT+PTY¿ª»úÉèÖÃ±³¾°µÆ
+  36                                4¡¢P9.2 P9.3×÷Îª¹ú¼ÒÆµÂÊOP1,OP2ÅÐ¶Ï½Ç£¬OP1=1,OP2=1Ê±ÎªÆÕÍ¨¹ú¼Ò±í µÍ¹¦ÂÊ   OP1=1,OP2Ê±ÎªRUÆµÂÊ¶
+             -Î¿ÉÇÐ»»¸ßµÍ¹¦ÂÊ
+  37                                 OP1=0£¬OP2=1Ê±ÎªHXÆµÂÊ¶Î  ¿ÉÇÐ»»¸ßµÍ¹¦ÂÊ  OP1=0,OP2=0Ê±ÎªÆÕÍ¨¹ú¼Ò±í ¿ÉÇÐ»»¸ßµÍ¹¦ÂÊ
+  38                                5¡¢PPT+SQ¿ª»úÉèÖÃ¹ú¼Ò»òÆµÂÊ¶Î  ÔÚÆÕÍ¨¹ú¼Ò±íÊ±ÎªÉèÖÃ¹ú¼Ò  ÔÚRU»òHX¹ú¼ÒÊ±ÎªÉèÖÃÆµÂÊ¶Î
+  39                                6¡¢°´AM/FM¼ü¿ª»ú ³ýÆÕÍ¨¹ú¼Ò±íµÍ¹¦ÂÊ Íâ»á½øÈë¸ßµÍ¹¦ÂÊÇÐ»»ÉèÖÃ
+  40                                4¡¢PPT+VOX¿ª»ú¸´Î»
+  41                                5¡¢ÔÚUK¹ú¼ÒÖÐ  ³¤°´AM/FM¼ü½øÈëCE¹ú¼Ò ÔÙ´Î³¤°´»Øµ½UK¹ú¼Ò  ÔÚµ¥µ÷ÖÆ¹ú¼ÒÖÐAM/FM¼ü·µ»Ø»î¶¯ÐÅµÀ¹¦ÄÜ
+             -¡£
+  42                                
+  43          
+  44          
+  45          
+  46          
+C51 COMPILER V9.52.0.0   MAIN                                                              06/02/2018 13:38:48 PAGE 2   
+
+  47          ****************************************************************************************************/
+  48          
+  49          
+  50          
+  51          /***************************************ÐÞ¸Ä¼ÇÂ¼***************************************************** 
+  52          Function List£º
+  53            1¡¢irq_timer1       16ms¶¨Ê±Æ÷ÖÐ¶Ï
+  54            2¡¢PowerOnShow      ¿ª»úÏÔÊ¾
+  55            3¡¢PowerOnComKey    ¿ª»ú×éºÏ°´¼üÊÂ¼þ
+  56            4¡¢main             Ö÷³ÌÐòÈë¿Ú
+  57            
+  58          Change Log:
+  59            
+  60          
+  61          
+  62          ****************************************************************************************************/
+  63          
+  64          
+  65          
+  66          
+  67          
+  68          /*-------------------------------------------------------------------------
+  69          *º¯Êý£ºirq_timer1  16ms¶¨Ê±ÖÐ¶Ï
+  70          *²ÎÊý£ºÎÞ  
+  71          *·µ»ØÖµ£ºÎÞ
+  72          *-------------------------------------------------------------------------*/
+  73          void irq_timer1(void) interrupt 3
+  74          {
+  75   1      
+  76   1         if((mReceivePackage.RecvCount!=0)||(mReceivePackage.RecvStatus!=UART0_IDLE))            //´®¿ÚÍ¨Ñ¶³¬Ê±
+  77   1        {
+  78   2          mTimer.uartTimeCount++;
+  79   2          if (mTimer.uartTimeCount == 20)
+  80   2          {
+  81   3            mReceivePackage.RecvCount = 0;
+  82   3            mReceivePackage.RecvStatus = UART0_IDLE;
+  83   3            TR1 = 0;
+  84   3            mTimer.uartTimeCount = 0;
+  85   3          }
+  86   2        }
+  87   1        if(mSysParam.isButtonTone==1)                              //°´¼üÒô
+  88   1        {
+  89   2          mTimer.ButtonToneTime--;
+  90   2          if(mTimer.ButtonToneTime==0)
+  91   2          {
+  92   3            xPWMCN &= ~0x10;        
+  93   3            mSysParam.isButtonTone=0;
+  94   3          }
+  95   2        }
+  96   1          if (mSqParam.Scan==1&&mSqParam.ScanHould==2)                                           //É¨ÃèµÈºî³¬Ê±¼
+             -ÌÐøÉ¨Ãè
+  97   1          {
+  98   2          mTimer.ScanHouldTime--;
+  99   2          if (mTimer.ScanHouldTime==0)
+ 100   2          {
+ 101   3            mSqParam.ScanHould = 1;
+ 102   3            mTimer.ScanHouldTime = SCAN_HOULD_TIME;
+ 103   3          }   
+ 104   2          }    
+ 105   1      }
+ 106          /*-------------------------------------------------------------------------
+ 107          *º¯Êý£ºPowerOnShow  ¿ª»úÏÔÊ¾È«ÆÁºóÏÔÊ¾¹ú¼ÒÈ»ºó½øÈëÐÅµÀÄ£Ê½²¢½øÈë½ÓÊÕ
+C51 COMPILER V9.52.0.0   MAIN                                                              06/02/2018 13:38:48 PAGE 3   
+
+ 108          *²ÎÊý£ºÎÞ
+ 109          *·µ»ØÖµ£ºÎÞ
+ 110          *-------------------------------------------------------------------------*/
+ 111          void PowerOnShow()
+ 112          {   
+ 113   1        ShowAll();  
+ 114   1        delayms(500);
+ 115   1        ShowClear();
+ 116   1        ShowCountry();
+ 117   1        delayms(1000);
+ 118   1        ShowClear();
+ 119   1        ShowChannel();  
+ 120   1        SetTxPower();
+ 121   1        SetModu();    
+ 122   1        BK4802_Init();  
+ 123   1      }
+ 124          /*-------------------------------------------------------------------------
+ 125          *º¯Êý£ºPowerOnComKey  °´¼ü¿ª»ú¶ÔÓ¦ÉèÖÃ
+ 126          *²ÎÊý£ºÎÞ
+ 127          *·µ»ØÖµ£ºÎÞ
+ 128          *-------------------------------------------------------------------------*/
+ 129          void PowerOnComKey()
+ 130          {
+ 131   1        u16 key=  Get_AD(ADC_Key1);
+ 132   1        if(((KEY_AFM_VAL-15)<key)&&(key<(KEY_AFM_VAL+15))&&mCbParam.CountryTable==2)          //°´ PPT ºÍ  ASQ ×é
+             -ºÏ¼üÊ±½øÈë·¢Éä¹¦ÂÊÑ¡Ôñ
+ 133   1        {
+ 134   2          mMenu.MenuIndex = CHENNEL_POWER;
+ 135   2          ShowPower();
+ 136   2          mSysParam.rest=1;
+ 137   2          while(PPT==0);
+ 138   2          delayms(500);
+ 139   2        }
+ 140   1        if(PPT==0&&((KEY_VOX_VAL-15)<key)&&(key<(KEY_VOX_VAL+15)))          //°´ PPT ºÍ  VOX ×éºÏ¼üÊ±½øÈë¸´Î»
+ 141   1        {
+ 142   2          ShowReset();
+ 143   2          mSysParam.rest=1;
+ 144   2          while(PPT==0);
+ 145   2          ResetParam();
+ 146   2          delayms(1000);
+ 147   2        }
+ 148   1        if(PPT==0&&((KEY_SQ_VAL-15)<key)&&(key<(KEY_SQ_VAL+15)))          //°´ PPT ºÍ  A¡¢FM ×éºÏ¼üÊ±½øÈë¹ú¼Ò±íÑ¡
+             -Ôñ
+ 149   1        {
+ 150   2          mMenu.MenuIndex = CHANNEL_COUNTRY;
+ 151   2          ShowCountry();
+ 152   2          mSysParam.rest=1;
+ 153   2          while(PPT==0);
+ 154   2          delayms(500);
+ 155   2        }
+ 156   1        if(PPT==0&&(((KEY_PTY_VAL-15)<key)&&(key<(KEY_PTY_VAL+15))))          //°´ PPT ºÍ  PTY ×éºÏ¼üÊ±½øÈë±³¾°ÑÕ
+             -É«µÆÑ¡Ôñ
+ 157   1        {   
+ 158   2            mMenu.MenuIndex = CHANNEL_BACKLIGHT;
+ 159   2            ShowBackColor(1);
+ 160   2            while (PPT == 0);
+ 161   2            delayms(500);
+ 162   2            mSysParam.rest=1;
+ 163   2            //PowerOnShow();
+ 164   2        }
+ 165   1      }
+ 166          
+C51 COMPILER V9.52.0.0   MAIN                                                              06/02/2018 13:38:48 PAGE 4   
+
+ 167          
+ 168          
+ 169          
+ 170          void main()
+ 171          {
+ 172   1        u16 dat;
+ 173   1        SystemInit();
+ 174   1        SET_AT_MUTE;
+ 175   1        initMemory();
+ 176   1        ShowBackColor(0);
+ 177   1        InitKey();
+ 178   1        RX_P=1;
+ 179   1        PowerOnComKey();
+ 180   1        SET_AT_MUTE;
+ 181   1        mTimer.TkCyclTime = TK_CYCL_TIME;
+ 182   1        while(1)
+ 183   1        {
+ 184   2          if (mSysParam.rest == 0)
+ 185   2          {     
+ 186   3            PowerOnShow();
+ 187   3            mSysParam.rest=1;
+ 188   3          }
+ 189   2          IS_KEY1_PRESS();           //É¨Ãè°´¼ü
+ 190   2          PPT_PRESS();
+ 191   2          UART_EVENT();
+ 192   2          SQ_Switch();
+ 193   2          ShowTk();
+ 194   2          VOX_Check();
+ 195   2          dat =BK4802_RssiAndSnr();
+ 196   2          dat =BK4802_ASQ();
+ 197   2        }
+ 198   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    520    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

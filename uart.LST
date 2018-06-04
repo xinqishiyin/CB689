@@ -1,0 +1,347 @@
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN uart.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE uart.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTEND 
+                    -TABS(2)
+
+line level    source
+
+   1          #include "system.h"
+   2          #include "uart.h"
+   3          #include "BK4802.h"
+   4          #include "at24c08.h"
+   5          
+   6          /***************************************修改记录*****************************************************
+   7           Function List：
+   8              1、uart0SendData    发送1字节数据
+   9              2、getVoltage       读取电压值
+  10              3、returnData       回复存储器数据
+  11              4、reciveData       保存接收数据
+  12              5、UART_EVENT       串口中断外部处理程序
+  13              6、Uart0            串口中断处理程序
+  14           Change Log:
+  15          
+  16          ****************************************************************************************************/
+  17          
+  18          xdata const u8 connSendCode[8]={0x02,0x50,0x52,0x4f,0x47,0x52,0x41,0x4d};  //第一次握手接收
+  19          xdata const u8 connReciveCode=0x06;
+  20          xdata const u8 connReSureCode=0x06;
+  21          xdata const u8 connSendSure=0x02;
+  22          xdata const u8 connReciveSure[8]={0x53,0x4d,0x50,0x35,0x35,0x38,0xff,0xff};
+  23          xdata const u8 readSendCode=0x52;
+  24          xdata const u8 writeSendCode=0x57;
+  25          
+  26          xdata u8 uartPage=0;
+  27          xdata u8 uartAddr=0;
+  28          u8 isConn=0;
+  29          u8 eeprombuf[16]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+  30          
+  31          void uart0SendByte(unsigned char dat)
+  32          {
+  33   1        SBUF0 = dat;  
+  34   1        while(TI == 0);
+  35   1        TI = 0;
+  36   1      }
+  37          /*-------------------------------------------------------------------------
+  38          *函数：uart0SendData  发送对应长度数组
+  39          *参数：cTxLength 长度    
+  40          *返回值：无
+  41          *-------------------------------------------------------------------------*/
+  42          void uart0SendData(unsigned char *p,u8 length)
+  43          { 
+  44   1        ES = 0;
+  45   1        while(length--)
+  46   1        {
+  47   2          uart0SendByte(*p);    
+  48   2          p++;
+  49   2        }
+  50   1        ES = 1;
+  51   1      }
+  52          
+  53          void getVoltage()
+  54          {
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 2   
+
+  55   1        u16 val;
+  56   1        mVoltageSend.ASQ_Vol=Get_AD(ADC_ASQ);
+  57   1        mVoltageSend.KEY1_Vol=Get_AD(ADC_Key1);
+  58   1        mVoltageSend.VOX_Vol=Get_AD(ADC_VOX);
+  59   1        mVoltageSend.RSSI_Vol=Get_AD(ADC_RSSI);
+  60   1        mVoltageSend.AGCA_Vol=Get_AD(ADC_AGCA);
+  61   1        val= BK4802_RssiAndSnr();
+  62   1        mVoltageSend.BK4802_Snr= (val&0x3f00)>>8;
+  63   1        mVoltageSend.BK4802_Rssi=(val&0x007f);
+  64   1        mVoltageSend.BK4802_ASQ=(val&0x00ff);
+  65   1      }
+  66          
+  67          
+  68          
+  69          void sendCommand()
+  70          {
+  71   1        u8 i;
+  72   1        getVoltage(); 
+  73   1        mCbParam.UartTxBuf[1]=14;
+  74   1        mCbParam.UartTxBuf[2]=mVoltageSend.ASQ_Vol/256;
+  75   1        mCbParam.UartTxBuf[3]=mVoltageSend.ASQ_Vol%256;
+  76   1        mCbParam.UartTxBuf[4]=mVoltageSend.KEY1_Vol/256;
+  77   1        mCbParam.UartTxBuf[5]=mVoltageSend.KEY1_Vol%256;
+  78   1        mCbParam.UartTxBuf[6]=mVoltageSend.VOX_Vol/256;
+  79   1        mCbParam.UartTxBuf[7]=mVoltageSend.VOX_Vol%256;
+  80   1        mCbParam.UartTxBuf[8]=mVoltageSend.RSSI_Vol/256;
+  81   1        mCbParam.UartTxBuf[9]=mVoltageSend.RSSI_Vol%256;
+  82   1        mCbParam.UartTxBuf[10]=mVoltageSend.AGCA_Vol/256;
+  83   1        mCbParam.UartTxBuf[11]=mVoltageSend.AGCA_Vol%256;
+  84   1        mCbParam.UartTxBuf[12]=mVoltageSend.BK4802_Snr;
+  85   1        mCbParam.UartTxBuf[13]=mVoltageSend.BK4802_Rssi;
+  86   1        mCbParam.UartTxBuf[14]=mVoltageSend.BK4802_ASQ;
+  87   1        mCbParam.UartTxBuf[15]=0;
+  88   1        for(i=2;i<15;i++)
+  89   1        {
+  90   2          mCbParam.UartTxBuf[15] ^=  mCbParam.UartTxBuf[i];
+  91   2        }
+  92   1        mCbParam.UartTxBuf[15]&=0x7f;
+  93   1        uart0SendData(mCbParam.UartTxBuf,16);
+  94   1      }
+  95          
+  96          
+  97          void returnData()
+  98          { 
+  99   1        u8 i;
+ 100   1        mCbParam.UartTxBuf[0]=writeSendCode;
+ 101   1        mCbParam.UartTxBuf[1]=uartPage;
+ 102   1        mCbParam.UartTxBuf[2]=uartAddr;
+ 103   1        mCbParam.UartTxBuf[3]=mReceivePackage.AdressLenth;
+ 104   1        eepromReadSequential(eeprombuf,uartPage,uartAddr,mReceivePackage.AdressLenth);
+ 105   1        for(i=0;i<8;i++)
+ 106   1        {
+ 107   2          mCbParam.UartTxBuf[4+i]=eeprombuf[i];
+ 108   2        }
+ 109   1        uart0SendData(mCbParam.UartTxBuf,mReceivePackage.AdressLenth+4);
+ 110   1      }
+ 111          void reciveData()
+ 112          {
+ 113   1        eepromWritePage(&mReceivePackage.RecvBuf,uartPage,uartAddr,mReceivePackage.AdressLenth);
+ 114   1        uart0SendByte(connReciveCode);
+ 115   1      }
+ 116          
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 3   
+
+ 117          void UART_EVENT(void)
+ 118          {
+ 119   1        eepromReadSequential(eeprombuf,0xA0,0x00,8);
+ 120   1        if(mReceivePackage.isSendData==1)
+ 121   1        {
+ 122   2          returnData();
+ 123   2          mReceivePackage.isSendData=0;
+ 124   2        }
+ 125   1        if(mReceivePackage.isReciveData==1)
+ 126   1        {
+ 127   2          reciveData();
+ 128   2          mReceivePackage.isReciveData=0;
+ 129   2        }
+ 130   1        if(mUartCmd!=0)
+ 131   1        {
+ 132   2          sendCommand();
+ 133   2          mUartCmd=0;
+ 134   2        }
+ 135   1        //sendCommand();
+ 136   1        //getVoltage();
+ 137   1      }
+ 138          
+ 139          /*-------------------------------------------------------------------------
+ 140          *函数：analyseCMD  发送参数
+ 141          *参数：要发送的参数    
+ 142          *返回值：无
+ 143          *-------------------------------------------------------------------------*/
+ 144          void analyseCMD(void)
+ 145          {
+ 146   1        mUartCmd = mReceivePackage.RecvBuf[1];          //1为参数名 
+ 147   1      }
+ 148          
+ 149          void Uart0(void) interrupt 4
+ 150          {
+ 151   1        uchar dat=0;
+ 152   1        uchar i=0;  
+ 153   1        if(RI==1)      //发送完毕
+ 154   1        {
+ 155   2          RI=0;
+ 156   2          TI = 0;
+ 157   2          TR1=1;              //开启定时器，用于超时检测
+ 158   2          mTimer.uartTimeCount=0;
+ 159   2          
+ 160   2          dat=SBUF0;
+ 161   2          switch(mReceivePackage.RecvStatus)
+ 162   2          {
+ 163   3            case UART0_IDLE:                       //接收8位第一次握手
+ 164   3              if(isConn==0&&dat==0x02)
+ 165   3              {
+ 166   4                isConn=1;
+ 167   4                mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 168   4                mReceivePackage.RecvCount++;
+ 169   4              }
+ 170   3              else if(isConn==1)
+ 171   3              {
+ 172   4                mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 173   4                mReceivePackage.RecvCount++;
+ 174   4                if(mReceivePackage.RecvCount==8)
+ 175   4                {
+ 176   5                  for(i=0;i<8;i++)
+ 177   5                  {
+ 178   6                    if(mReceivePackage.RecvBuf[i]!=connSendCode[i])
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 4   
+
+ 179   6                    {
+ 180   7                      mReceivePackage.RecvCount=0;
+ 181   7                      return;
+ 182   7                    }
+ 183   6                  }
+ 184   5                  uart0SendByte(connReciveCode);
+ 185   5                  mReceivePackage.RecvStatus=UART0_SYN;
+ 186   5                  mReceivePackage.RecvCount=0;
+ 187   5                } 
+ 188   4              } 
+ 189   3              
+ 190   3              break;
+ 191   3            case UART0_SYN:                    //接收0X02 回复确认 第二次握手
+ 192   3              if(dat==connSendSure)
+ 193   3              {   
+ 194   4              
+ 195   4                uart0SendData(connReciveSure,8);
+ 196   4              }
+ 197   3              else if(dat==connReSureCode)                          //进入数据传送  第三次握手
+ 198   3              {
+ 199   4                mReceivePackage.RecvStatus=UART0_HEAD;
+ 200   4                mReceivePackage.RecvCount=0;
+ 201   4                
+ 202   4                uart0SendByte(connReciveCode);
+ 203   4              }
+ 204   3              break;
+ 205   3            case UART0_HEAD:
+ 206   3              switch(mReceivePackage.RecvCount)
+ 207   3              {
+ 208   4                case 0:
+ 209   4                  if(dat==readSendCode)
+ 210   4                  {
+ 211   5                    mReceivePackage.WriteOrRead=Read; 
+ 212   5                    mReceivePackage.RecvCount++;
+ 213   5                  }
+ 214   4                  else if(dat==writeSendCode)
+ 215   4                  {
+ 216   5                    mReceivePackage.WriteOrRead=Write;  
+ 217   5                    mReceivePackage.RecvCount=1;
+ 218   5                  }
+ 219   4                  else
+ 220   4                  {
+ 221   5                    mReceivePackage.RecvStatus=UART0_IDLE;
+ 222   5                    mReceivePackage.RecvCount=0;
+ 223   5                  }
+ 224   4                  
+ 225   4                  if(dat==MAGIC)
+ 226   4                  {
+ 227   5                    mReceivePackage.RecvStatus = MSG_HEADER;
+ 228   5                  }
+ 229   4                  break;
+ 230   4                case 1:
+ 231   4                  uartPage=dat;
+ 232   4                  mReceivePackage.RecvCount=2;
+ 233   4                  break;
+ 234   4                case 2:
+ 235   4                  uartAddr=dat;
+ 236   4                  mReceivePackage.RecvCount=3;
+ 237   4                  break;
+ 238   4                case 3:       
+ 239   4                  mReceivePackage.AdressLenth=dat;          
+ 240   4                  if(mReceivePackage.WriteOrRead==Write)
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 5   
+
+ 241   4                  {
+ 242   5                    mReceivePackage.RecvStatus=UART0_DATA;
+ 243   5                    mReceivePackage.RecvCount=0;
+ 244   5                  }
+ 245   4                  else if(mReceivePackage.WriteOrRead==Read)
+ 246   4                  {
+ 247   5                    mReceivePackage.isSendData=1;
+ 248   5                    mReceivePackage.RecvCount=0;
+ 249   5                  }
+ 250   4                  break;
+ 251   4              }
+ 252   3              break;
+ 253   3            case UART0_DATA:
+ 254   3              if(mReceivePackage.RecvCount<mReceivePackage.AdressLenth)
+ 255   3              {
+ 256   4                mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 257   4                mReceivePackage.RecvCount++;    
+ 258   4                if(mReceivePackage.RecvCount==8)
+ 259   4                {
+ 260   5                  mReceivePackage.isReciveData=1;
+ 261   5                  mReceivePackage.RecvStatus=UART0_HEAD;
+ 262   5                  mReceivePackage.RecvCount=0;
+ 263   5                }
+ 264   4              }
+ 265   3              else
+ 266   3              {         
+ 267   4                mReceivePackage.RecvStatus=UART0_IDLE;
+ 268   4                mReceivePackage.RecvCount=0;
+ 269   4              }
+ 270   3              break;
+ 271   3            case MSG_HEADER:                                         // 0 位为数据头
+ 272   3                mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 273   3                if(mReceivePackage.RecvCount == 2)
+ 274   3                {
+ 275   4                  if(mReceivePackage.RecvBuf[2] == 0) //数据长度
+ 276   4                  {
+ 277   5                    analyseCMD();
+ 278   5                    mReceivePackage.RecvCount = 0;
+ 279   5                  }
+ 280   4                  else 
+ 281   4                  {
+ 282   5                    mReceivePackage.RecvStatus = MSG_DATA;
+ 283   5                  }
+ 284   4                }
+ 285   3                mReceivePackage.RecvCount++;
+ 286   3                break;
+ 287   3              case MSG_DATA:
+ 288   3                mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 289   3                if(mReceivePackage.RecvCount==4)
+ 290   3                {
+ 291   4                  mReceivePackage.RecvBuf[mReceivePackage.RecvCount]=dat;
+ 292   4                }
+ 293   3                if((mReceivePackage.RecvCount -2)>=mReceivePackage.RecvBuf[2]) //2为数据长度
+ 294   3                {
+ 295   4                  dat=0;
+ 296   4                  for(i=3;i<2+(mReceivePackage.RecvBuf[2]); i++)
+ 297   4                  {
+ 298   5                    dat^=mReceivePackage.RecvBuf[i];
+ 299   5                  }
+ 300   4                  dat &=0x7f;
+ 301   4                  if(mReceivePackage.RecvBuf[i]==dat)
+ 302   4                  {
+C51 COMPILER V9.52.0.0   UART                                                              06/02/2018 13:38:51 PAGE 6   
+
+ 303   5                    analyseCMD();
+ 304   5                    mReceivePackage.RecvCount=0;
+ 305   5                  }
+ 306   4                }
+ 307   3              
+ 308   3                mReceivePackage.RecvCount++;
+ 309   3                break;    
+ 310   3            default:break;
+ 311   3          }
+ 312   2        }
+ 313   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1315    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     40       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

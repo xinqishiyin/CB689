@@ -1,0 +1,95 @@
+C51 COMPILER V9.52.0.0   TIMER                                                             05/24/2018 15:40:52 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN Timer.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE Timer.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTEND
+                    - TABS(2)
+
+line level    source
+
+   1          #include "system.h"
+   2          
+   3          
+   4          
+   5          
+   6          /*-------------------------------------------------------------------------
+   7          *函数：irq_timer1  16ms定时中断
+   8          *参数：无  
+   9          *返回值：无
+  10          *-------------------------------------------------------------------------*/
+  11          void irq_timer1(void) interrupt 3
+  12          {
+  13   1        /*---------------------通讯超时---------------------------*/
+  14   1         if((mReceivePackage.RecvCount!=0)||(mReceivePackage.RecvStatus!=UART0_IDLE))
+  15   1        {
+  16   2          mTimer.uartTimeCount++;
+  17   2          if (mTimer.uartTimeCount == 20)
+  18   2          {
+  19   3            mReceivePackage.RecvCount = 0;
+  20   3            mReceivePackage.RecvStatus = UART0_IDLE;
+  21   3            TR1 = 0;
+  22   3            mTimer.uartTimeCount = 0;
+  23   3          }
+  24   2        }
+  25   1         /*---------------------按键音停止---------------------------*/
+  26   1        if(mSysParam.isButtonTone==1)
+  27   1        {
+  28   2          mTimer.ButtonToneTime--;
+  29   2          if(mTimer.ButtonToneTime==0)
+  30   2          {
+  31   3            xPWMCN &= ~0x10;        
+  32   3            mSysParam.isButtonTone=0;
+  33   3          }
+  34   2        }
+  35   1      
+  36   1        /*---------------------返回主菜单---------------------------*/
+  37   1        if (mMenu.MenuIndex != CHANNEL&&mMenu.MenuIndex != CHANNEL_COUNTRY&&mMenu.MenuIndex != CHANNEL_TABLE)
+  38   1        {
+  39   2          mTimer.Back_Channel_Time--;
+  40   2          if (mTimer.Back_Channel_Time == 0)
+  41   2          {
+  42   3            if (mMenu.isLock == 0 && mMenu.isTx == 0)
+  43   3            {
+  44   4              mMenu.isBackChannel = 1;        
+  45   4            }
+  46   3            mTimer.Back_Channel_Time = BACK_TIME;
+  47   3          }
+  48   2        }
+  49   1        else
+  50   1        {
+  51   2          mTimer.Back_Channel_Time = BACK_TIME;
+  52   2        }
+  53   1      
+  54   1        /*----------------------组合键超时-----------------*/
+C51 COMPILER V9.52.0.0   TIMER                                                             05/24/2018 15:40:52 PAGE 2   
+
+  55   1        if (mKey.isKeyCombo == 1)
+  56   1        {
+  57   2          mKey.KeyComboLimit--;
+  58   2          if (mKey.KeyComboLimit == 0)
+  59   2          {
+  60   3            mMenu.keyCombSQUP = 0;
+  61   3            mMenu.keyCombSQDN = 0;
+  62   3            mKey.isKeyCombo = 0;
+  63   3          }
+  64   2        }
+  65   1        else
+  66   1        {
+  67   2          mKey.KeyComboLimit = KEY_COMBOlIMIT;
+  68   2        }
+  69   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    224    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

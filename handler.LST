@@ -1,0 +1,262 @@
+C51 COMPILER V9.52.0.0   HANDLER                                                           06/02/2018 13:38:57 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE HANDLER
+OBJECT MODULE PLACED IN handler.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE handler.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTE
+                    -ND TABS(2)
+
+line level    source
+
+   1          #include "system.h"
+   2          #include "handler.h"
+   3          #include "uart.h"
+   4          
+   5          /***************************************修改记录*****************************************************
+   6           
+   7           Function List：
+   8           1、setRfg      Rfg引脚电压值控制 0-200
+   9           2、SetTxPower      功率对应引脚控制
+  10           3、checkRssi       SQ值
+  11           4、SQ_Switch       SQ旋钮电压值
+  12           5、SetModu         模式对应引脚控制
+  13           Change Log:
+  14          
+  15          ****************************************************************************************************/
+  16          
+  17          uint asq_open_table[] =   
+  18          { 
+  19            ASQ_OPEN_LEVEL_127DB, ASQ_OPEN_LEVEL_126DB, ASQ_OPEN_LEVEL_125DB, ASQ_OPEN_LEVEL_124DB, ASQ_OPEN_LEVEL_12
+             -3DB,  ASQ_OPEN_LEVEL_122DB,  //                 3
+  20            ASQ_OPEN_LEVEL_121DB, ASQ_OPEN_LEVEL_120DB, ASQ_OPEN_LEVEL_119DB, ASQ_OPEN_LEVEL_118DB, ASQ_OPEN_LEVEL_11
+             -7DB,  
+  21            ASQ_OPEN_LEVEL_116DB, ASQ_OPEN_LEVEL_115DB, ASQ_OPEN_LEVEL_114DB, ASQ_OPEN_LEVEL_113DB, ASQ_OPEN_LEVEL_11
+             -2DB,  
+  22            ASQ_OPEN_LEVEL_111DB, ASQ_OPEN_LEVEL_110DB, ASQ_OPEN_LEVEL_109DB                                       
+  23          };
+  24          uint asq_close_table[] = 
+  25          { 
+  26            ASQ_CLOSE_LEVEL_127DB,  ASQ_CLOSE_LEVEL_126DB,  ASQ_CLOSE_LEVEL_125DB,  ASQ_CLOSE_LEVEL_124DB,  ASQ_CLOSE_LEV
+             -EL_123DB,  ASQ_CLOSE_LEVEL_122DB,  //                 3
+  27            ASQ_CLOSE_LEVEL_121DB,  ASQ_CLOSE_LEVEL_120DB,  ASQ_CLOSE_LEVEL_119DB,  ASQ_CLOSE_LEVEL_118DB,  ASQ_CLOSE_LEV
+             -EL_117DB,  
+  28            ASQ_CLOSE_LEVEL_116DB,  ASQ_CLOSE_LEVEL_115DB,  ASQ_CLOSE_LEVEL_114DB,  ASQ_CLOSE_LEVEL_113DB,  ASQ_CLOSE_LEV
+             -EL_112DB,  
+  29            ASQ_CLOSE_LEVEL_111DB,  ASQ_CLOSE_LEVEL_110DB,  ASQ_CLOSE_LEVEL_109DB                                      
+             - 
+  30          };
+  31          /*
+  32          code uint asq_table[] = { ASQ_LEVEL_121DB,  ASQ_LEVEL_119DB,  ASQ_LEVEL_117DB,  ASQ_LEVEL_115DB,  ASQ_LEVEL_11
+             -3DB};
+  33          */
+  34          
+  35          uint sq_open_table[] = 
+  36          {
+  37            SQ_OPEN_124DB,  SQ_OPEN_123DB,  SQ_OPEN_122DB,  SQ_OPEN_121DB,  SQ_OPEN_120DB,  SQ_OPEN_119DB,  SQ_OPEN_118DB,  
+             -SQ_OPEN_117DB,  SQ_OPEN_116DB,  SQ_OPEN_115DB,     //3 5 7 9
+  38            SQ_OPEN_114DB,  SQ_OPEN_113DB,  SQ_OPEN_112DB,  SQ_OPEN_111DB,  SQ_OPEN_110DB,  SQ_OPEN_109DB,  SQ_OPEN_108DB,  
+             -SQ_OPEN_107DB,  SQ_OPEN_106DB,  SQ_OPEN_105DB,     //11 13 15 17 19
+  39            SQ_OPEN_104DB,  SQ_OPEN_103DB,  SQ_OPEN_102DB,  SQ_OPEN_101DB,  SQ_OPEN_100DB,  SQ_OPEN_99DB, SQ_OPEN_98DB, SQ
+             -_OPEN_97DB,  SQ_OPEN_96DB,  SQ_OPEN_95DB,      //21 23 25 27 29
+  40            SQ_OPEN_94DB, SQ_OPEN_93DB, SQ_OPEN_92DB, SQ_OPEN_91DB, SQ_OPEN_90DB, SQ_OPEN_89DB, SQ_OPEN_88DB, SQ_OPEN
+             -_87DB,  SQ_OPEN_86DB, SQ_OPEN_85DB,      //31 33 35 37 39
+  41            SQ_OPEN_84DB, SQ_OPEN_83DB, SQ_OPEN_82DB, SQ_OPEN_81DB, SQ_OPEN_80DB, SQ_OPEN_79DB, SQ_OPEN_78DB, SQ_OPEN
+             -_77DB,  SQ_OPEN_76DB, SQ_OPEN_75DB,      //41 43 45 47 
+C51 COMPILER V9.52.0.0   HANDLER                                                           06/02/2018 13:38:57 PAGE 2   
+
+  42            SQ_OPEN_74DB, SQ_OPEN_73DB, SQ_OPEN_72DB, SQ_OPEN_71DB, SQ_OPEN_70DB, SQ_OPEN_69DB, SQ_OPEN_68DB, SQ_OPEN
+             -_67DB,  SQ_OPEN_66DB, SQ_OPEN_65DB,      //51
+  43            SQ_OPEN_64DB, SQ_OPEN_63DB, SQ_OPEN_62DB, SQ_OPEN_61DB, SQ_OPEN_60DB, SQ_OPEN_59DB, SQ_OPEN_58DB, SQ_OPEN
+             -_57DB,  SQ_OPEN_56DB, SQ_OPEN_55DB,      //61
+  44            SQ_OPEN_54DB, SQ_OPEN_53DB, SQ_OPEN_52DB, SQ_OPEN_51DB, SQ_OPEN_50DB, SQ_OPEN_49DB, SQ_OPEN_48DB, SQ_OPEN
+             -_47DB,  SQ_OPEN_46DB, SQ_OPEN_45DB,      //71 77
+  45            SQ_OPEN_44DB, SQ_OPEN_43DB, SQ_OPEN_42DB, SQ_OPEN_41DB, SQ_OPEN_40DB                                     
+             -                    //82
+  46          };
+  47          
+  48          uint sq_close_table[] = 
+  49          {
+  50            SQ_CLOSE_127DB, SQ_CLOSE_126DB, SQ_CLOSE_125DB, SQ_CLOSE_124DB, SQ_CLOSE_123DB, SQ_CLOSE_122DB, SQ_CLOSE_
+             -121DB,  SQ_CLOSE_120DB, SQ_CLOSE_119DB, SQ_CLOSE_118DB, SQ_CLOSE_117DB, SQ_CLOSE_116DB, SQ_CLOSE_115DB,
+  51            SQ_CLOSE_114DB, SQ_CLOSE_113DB, SQ_CLOSE_112DB, SQ_CLOSE_111DB, SQ_CLOSE_110DB, SQ_CLOSE_109DB, SQ_CLOSE_
+             -108DB,  SQ_CLOSE_107DB, SQ_CLOSE_106DB, SQ_CLOSE_105DB,
+  52            SQ_CLOSE_104DB, SQ_CLOSE_103DB, SQ_CLOSE_102DB, SQ_CLOSE_101DB, SQ_CLOSE_100DB, SQ_CLOSE_99DB,  SQ_CLOSE_9
+             -8DB,  SQ_CLOSE_97DB,  SQ_CLOSE_96DB,  SQ_CLOSE_95DB,
+  53            SQ_CLOSE_94DB,  SQ_CLOSE_93DB,  SQ_CLOSE_92DB,  SQ_CLOSE_91DB,  SQ_CLOSE_90DB,  SQ_CLOSE_89DB,  SQ_CLOSE_88DB,  
+             -SQ_CLOSE_87DB,  SQ_CLOSE_86DB,  SQ_CLOSE_85DB,
+  54            SQ_CLOSE_84DB,  SQ_CLOSE_83DB,  SQ_CLOSE_82DB,  SQ_CLOSE_81DB,  SQ_CLOSE_80DB,  SQ_CLOSE_79DB,  SQ_CLOSE_78DB,  
+             -SQ_CLOSE_77DB,  SQ_CLOSE_76DB,  SQ_CLOSE_75DB,
+  55            SQ_CLOSE_74DB,  SQ_CLOSE_73DB,  SQ_CLOSE_72DB,  SQ_CLOSE_71DB,  SQ_CLOSE_70DB,  SQ_CLOSE_69DB,  SQ_CLOSE_68DB,  
+             -SQ_CLOSE_67DB,  SQ_CLOSE_66DB,  SQ_CLOSE_65DB,
+  56            SQ_CLOSE_64DB,  SQ_CLOSE_63DB,  SQ_CLOSE_62DB,  SQ_CLOSE_61DB,  SQ_CLOSE_60DB,  SQ_CLOSE_59DB,  SQ_CLOSE_58DB,  
+             -SQ_CLOSE_57DB,  SQ_CLOSE_56DB,  SQ_CLOSE_55DB,
+  57            SQ_CLOSE_54DB,  SQ_CLOSE_53DB,  SQ_CLOSE_52DB,  SQ_CLOSE_51DB,  SQ_CLOSE_50DB,  SQ_CLOSE_49DB,  SQ_CLOSE_48DB,  
+             -SQ_CLOSE_47DB,  SQ_CLOSE_46DB,  SQ_CLOSE_45DB,
+  58            SQ_CLOSE_44DB,  SQ_CLOSE_43DB,  SQ_CLOSE_42DB,  SQ_CLOSE_41DB,  SQ_CLOSE_40DB
+  59          };
+  60          
+  61          /*-------------------------------------------------------------------------
+  62          *函数：setRfg  设置Rfg
+  63          *参数：无
+  64          *返回值：无
+  65          *-------------------------------------------------------------------------*/
+  66          void setRfg(uchar RfgLevel)
+  67          {
+  68   1        uchar rfg;   
+  69   1        PWM_MODDA_CLOSE;  
+  70   1        if (RfgLevel == 0) rfg = 0;
+  71   1        else if (RfgLevel == 1) rfg = 116;
+  72   1        else if (RfgLevel == 2) rfg = 121;
+  73   1        else if (RfgLevel == 3) rfg = 128;
+  74   1        else if (RfgLevel == 4) rfg = 135;
+  75   1        else if (RfgLevel == 5) rfg = 142;
+  76   1        else if (RfgLevel == 6) rfg = 149;
+  77   1        else if (RfgLevel == 7) rfg = 158;
+  78   1        else if (RfgLevel == 8) rfg = 180;
+  79   1        else if (RfgLevel == 9) rfg = 200;           //对应占空比来改变电压
+  80   1        if (rfg != 0)
+  81   1        {
+  82   2          MODDA = rfg;
+  83   2          PWM_MODDA_OPEN;
+  84   2        }
+  85   1        
+  86   1      }
+  87          
+  88          /*-------------------------------------------------------------------------
+  89          *函数：SetTxPower  设置功率
+  90          *参数：无
+  91          *返回值：无
+C51 COMPILER V9.52.0.0   HANDLER                                                           06/02/2018 13:38:57 PAGE 3   
+
+  92          *-------------------------------------------------------------------------*/
+  93          void SetTxPower()
+  94          {
+  95   1        if(mCbParam.CountryTable==1 && mCbParam.Country==COUNTRY_EU && mCbParam.Modu==AM)
+  96   1        {
+  97   2          POW_4W = 1;
+  98   2          POW_1W = 0;      //1W功率
+  99   2        }
+ 100   1        else if(mCbParam.CountryTable==2 && (mCbParam.TxPower == POWER_HIGH))
+ 101   1        {
+ 102   2          POW_4W = 0;
+ 103   2          POW_1W = 0;      //8W功率
+ 104   2        }
+ 105   1        else 
+ 106   1        {
+ 107   2          POW_4W = 0;
+ 108   2          POW_1W = 1;   //4W功率
+ 109   2        } 
+ 110   1      }
+ 111          /*-------------------------------------------------------------------------
+ 112          *函数：SetModu  设置调制
+ 113          *参数：无
+ 114          *返回值：无
+ 115          *-------------------------------------------------------------------------*/
+ 116          void SetModu()
+ 117          {
+ 118   1        if (mCbParam.Modu == FM)
+ 119   1        {
+ 120   2          SET_FM_EN;            //FM电源开启
+ 121   2          CLS_AM_EN;        //AM电源开启
+ 122   2          AF_EN = 1;            //FM、AM通路选择
+ 123   2          
+ 124   2        }
+ 125   1        else
+ 126   1        {
+ 127   2          SET_AM_EN;
+ 128   2          CLS_FM_EN;
+ 129   2          AF_EN = 0;
+ 130   2        }
+ 131   1        
+ 132   1      }
+ 133          
+ 134          /*-------------------------------------------------------------------------
+ 135          *函数：checkRssi  
+ 136          *参数：无
+ 137          *返回值：无
+ 138          *-------------------------------------------------------------------------*/
+ 139          void checkRssi(void)
+ 140          {
+ 141   1        uchar i;
+ 142   1        uint temp_asq,temp_rssi,temp_agca;  
+ 143   1        temp_asq = 0;
+ 144   1        temp_rssi = 0;
+ 145   1        temp_agca = 0;
+ 146   1        for(i=0; i<3; i++)
+ 147   1        {
+ 148   2          if(mSqParam.IsAsq==1)
+ 149   2          {
+ 150   3            temp_asq += Get_AD(ADC_ASQ);
+ 151   3          }
+ 152   2          temp_rssi += Get_AD(ADC_RSSI);
+ 153   2          temp_agca += Get_AD(ADC_AGCA);
+C51 COMPILER V9.52.0.0   HANDLER                                                           06/02/2018 13:38:57 PAGE 4   
+
+ 154   2          delayms(1);
+ 155   2        }
+ 156   1        if(mSqParam.IsAsq==1)
+ 157   1        {
+ 158   2          mSysParam.mAsqVoltage = temp_asq/3;
+ 159   2        }
+ 160   1        mSysParam.mRssiVoltage = temp_rssi/3;
+ 161   1        mSysParam.mAgcaVoltage = temp_agca/3;
+ 162   1      }
+ 163          /*-------------------------------------------------------------------------
+ 164          *函数：SQ_Switch  SQ阈值
+ 165          *参数：无
+ 166          *返回值：无
+ 167          *-------------------------------------------------------------------------*/
+ 168          void SQ_Switch()
+ 169          {
+ 170   1        u16 val;
+ 171   1        u8 sqlevel; 
+ 172   1        if(mSqParam.IsAsq==0)
+ 173   1        {
+ 174   2          val=Get_AD(ADC_ASQ);
+ 175   2          sqlevel=(val-SQ_VOL_MIN)/((SQ_VOL_MAX-SQ_VOL_MIN)/28);     //旋钮电压平均分成28等分
+ 176   2        } 
+ 177   1      }
+ 178          /*-------------------------------------------------------------------------
+ 179          *函数：VOX_Check  VOX打开
+ 180          *参数：无
+ 181          *返回值：无
+ 182          *-------------------------------------------------------------------------*/
+ 183          void VOX_Check()
+ 184          {
+ 185   1      //  u16 val;
+ 186   1      //  if (mSqParam.IsVox==1)
+ 187   1      //  {
+ 188   1      //    val = Get_AD(ADC_VOX);
+ 189   1      //    if (val > VOX_GAIN_VAL)
+ 190   1      //    {
+ 191   1      //      MenuOperate(KEY_PPT_DN);
+ 192   1      //      while (val > VOX_GAIN_VAL);
+ 193   1      //      MenuOperate(KEY_PPT_UP);
+ 194   1      //    }
+ 195   1      //  } 
+ 196   1      }
+ 197          
+ 198          
+ 199          
+ 200          
+ 201          
+ 202          
+ 203          
+ 204          
+ 205          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    375    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    422       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.52.0.0   HANDLER                                                           06/02/2018 13:38:57 PAGE 5   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

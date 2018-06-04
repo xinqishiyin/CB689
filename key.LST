@@ -1,0 +1,284 @@
+C51 COMPILER V9.52.0.0   KEY                                                               06/02/2018 13:38:55 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN key.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE key.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTEND T
+                    -ABS(2)
+
+line level    source
+
+   1          #include "system.h"
+   2          #include "key.h"
+   3          #include "Menu.h"
+   4          #include "lcdset.h"
+   5          #include "lcdshow.h"
+   6          #include "memory.h"
+   7          
+   8          /***************************************修改记录***************************************************** 
+   9           Function List：
+  10              1、IS_KEY1_PRESS       6in1 按键判断
+  11              2、PPT_PRESS           PPT键判断
+  12              3、InitKey             按键状态初使化
+  13              4、playButtonTone      按键音
+  14           Change Log:
+  15          
+  16          
+  17          ****************************************************************************************************/
+  18          
+  19          
+  20          xdata tKey mKey;
+  21          u8 inDex1=KEY_NULL;
+  22          
+  23          void IS_KEY1_PRESS(void)
+  24          {
+  25   1        u16 vae=0;
+  26   1        vae=Get_AD(ADC_Key1);
+  27   1        if(vae<0x0360)
+  28   1        {
+  29   2          delayms(50);                     //消大抖动，防窜键
+  30   2          vae=Get_AD(ADC_Key1);
+  31   2          if(((KEY_SQ_VAL-15)<vae)&&(vae<(KEY_SQ_VAL+15))) mKey.KeyIndex1=KEY_SQ;
+  32   2          else if(((KEY_UP_VAL-15)<vae)&&(vae<(KEY_UP_VAL+15))) mKey.KeyIndex1=KEY_UP;  
+  33   2          else if(((KEY_DN_VAL-15)<vae)&&(vae<(KEY_DN_VAL+15))) mKey.KeyIndex1=KEY_DN;  
+  34   2          else if(((KEY_VOX_VAL-15)<vae)&&(vae<(KEY_VOX_VAL+15))) mKey.KeyIndex1=KEY_VOX;
+  35   2          else if(((KEY_PTY_VAL-15)<vae)&&(vae<(KEY_PTY_VAL+15))) mKey.KeyIndex1=KEY_PTY;
+  36   2          else if(((KEY_AFM_VAL-15)<vae)&&(vae<(KEY_AFM_VAL+15))) mKey.KeyIndex1=KEY_AFM;
+  37   2          else mKey.KeyIndex1=KEY_NULL;
+  38   2        }
+  39   1        else
+  40   1        {
+  41   2          mKey.KeyIndex1=KEY_NULL;
+  42   2        }
+  43   1        
+  44   1        
+  45   1        
+  46   1        
+  47   1        /*---------------------返回主菜单---------------------------*/
+  48   1        if(mMenu.MenuIndex!=CHANNEL&&mMenu.MenuIndex!=CHANNEL_COUNTRY)            
+  49   1        {
+  50   2          mMenu.Back_Channel_Time--;
+  51   2          if(mMenu.Back_Channel_Time==0)
+  52   2          {
+  53   3            if(mMenu.isLock==0&&mMenu.isTx==0)
+  54   3            {
+C51 COMPILER V9.52.0.0   KEY                                                               06/02/2018 13:38:55 PAGE 2   
+
+  55   4              mMenu.MenuIndex=CHANNEL;              //返回        
+  56   4              ShowChannel();        
+  57   4              saveAllParam();       
+  58   4            }
+  59   3            mMenu.Back_Channel_Time=BACK_TIME;
+  60   3          }
+  61   2        }
+  62   1        else
+  63   1        {
+  64   2          mMenu.Back_Channel_Time=BACK_TIME;
+  65   2        }
+  66   1        
+  67   1        /*----------------------组合键超时-----------------*/
+  68   1        if(mKey.isKeyCombo==1)
+  69   1        {
+  70   2          mKey.KeyComboLimit--;
+  71   2          if(mKey.KeyComboLimit==0)
+  72   2          {
+  73   3            mMenu.keyCombSQUP=0;
+  74   3            mMenu.keyCombSQDN=0;
+  75   3            mKey.isKeyCombo=0;
+  76   3          }
+  77   2        }
+  78   1        else 
+  79   1        {
+  80   2          mKey.KeyComboLimit=KEY_COMBOlIMIT;
+  81   2        }
+  82   1        
+  83   1        switch(mKey.KeyIndex1)
+  84   1        {
+  85   2          case KEY_SQ:      
+  86   2            inDex1=KEY_SQ;
+  87   2            if(mKey.LongPress_Time>0) mKey.LongPress_Time--;
+  88   2            if(mKey.LongPress_Time==0)          //长按3秒
+  89   2            {
+  90   3              MenuOperate(KEY_LONG_SQ);
+  91   3              inDex1=KEY_NULL;
+  92   3              mKey.LongPress_Time=LONGPRESSTIME;
+  93   3              while(((KEY_SQ_VAL-50)<vae)&&(vae<(KEY_SQ_VAL+50)))
+  94   3              {
+  95   4                vae=Get_AD(ADC_Key1);
+  96   4              }
+  97   3            }
+  98   2            break;
+  99   2          case KEY_UP:
+ 100   2            inDex1=KEY_UP;
+ 101   2            if(mKey.LongPress_Time>0) mKey.LongPress_Time--;
+ 102   2            if(mKey.LongPress_Time==0)          //长按3秒
+ 103   2            {
+ 104   3              MenuOperate(KEY_LONG_UP);
+ 105   3              inDex1=KEY_NULL;
+ 106   3              mKey.LongPress_Time=LONGPRESSTIME;
+ 107   3              
+ 108   3              while(((KEY_UP_VAL-50)<vae)&&(vae<(KEY_UP_VAL+50)))
+ 109   3              {
+ 110   4                vae=Get_AD(ADC_Key1);
+ 111   4              }
+ 112   3            }     
+ 113   2            break;
+ 114   2          case KEY_DN:
+ 115   2            inDex1=KEY_DN;
+ 116   2            if(mKey.LongPress_Time>0) mKey.LongPress_Time--;
+C51 COMPILER V9.52.0.0   KEY                                                               06/02/2018 13:38:55 PAGE 3   
+
+ 117   2            if(mKey.LongPress_Time==0)          //长按3秒
+ 118   2            {
+ 119   3              MenuOperate(KEY_LONG_DN);
+ 120   3              inDex1=KEY_NULL;
+ 121   3              mKey.LongPress_Time=LONGPRESSTIME;    
+ 122   3              while(((KEY_DN_VAL-50)<vae)&&(vae<(KEY_DN_VAL+50)))
+ 123   3              {
+ 124   4                vae=Get_AD(ADC_Key1);
+ 125   4              }
+ 126   3            } 
+ 127   2            break;
+ 128   2          case KEY_VOX:
+ 129   2            inDex1=KEY_VOX;   
+ 130   2            if(mKey.LongPress_Time>0) mKey.LongPress_Time--;
+ 131   2            if(mKey.LongPress_Time==0)          //长按3秒
+ 132   2            {
+ 133   3              MenuOperate(KEY_LONG_VOX);
+ 134   3              inDex1=KEY_NULL;
+ 135   3              mKey.LongPress_Time=LONGPRESSTIME;
+ 136   3              while(((KEY_VOX_VAL-50)<vae)&&(vae<(KEY_VOX_VAL+50)))
+ 137   3              {
+ 138   4                vae=Get_AD(ADC_Key1);
+ 139   4              }
+ 140   3            }     
+ 141   2            break;
+ 142   2          case KEY_PTY:
+ 143   2            inDex1=KEY_PTY;
+ 144   2            MenuOperate(KEY_PTY);     
+ 145   2            while(((KEY_PTY_VAL-50)<vae)&&(vae<(KEY_PTY_VAL+50)))
+ 146   2            {
+ 147   3              vae=Get_AD(ADC_Key1);
+ 148   3            }
+ 149   2            break;
+ 150   2          case KEY_AFM:
+ 151   2            inDex1=KEY_AFM;
+ 152   2            if(mKey.LongPress_Time>0) mKey.LongPress_Time--;
+ 153   2            if(mKey.LongPress_Time==0)          //长按3秒
+ 154   2            {
+ 155   3              MenuOperate(KEY_LONG_AFM);
+ 156   3              inDex1=KEY_NULL;
+ 157   3              mKey.LongPress_Time=LONGPRESSTIME;
+ 158   3              while(((KEY_AFM_VAL-50)<vae)&&(vae<(KEY_AFM_VAL+50)))
+ 159   3              {
+ 160   4                vae=Get_AD(ADC_Key1);
+ 161   4              }
+ 162   3            }     
+ 163   2            break;
+ 164   2          default:
+ 165   2            switch(inDex1)
+ 166   2            {
+ 167   3              case KEY_SQ:
+ 168   3                MenuOperate(KEY_SQ);
+ 169   3                break;
+ 170   3              case KEY_UP:
+ 171   3                MenuOperate(KEY_UP);
+ 172   3                break;
+ 173   3              case KEY_DN:
+ 174   3                MenuOperate(KEY_DN);
+ 175   3                break;
+ 176   3              case KEY_AFM:
+ 177   3                MenuOperate(KEY_AFM);
+ 178   3                break;
+C51 COMPILER V9.52.0.0   KEY                                                               06/02/2018 13:38:55 PAGE 4   
+
+ 179   3              case KEY_VOX:
+ 180   3                MenuOperate(KEY_VOX); 
+ 181   3                break;
+ 182   3            }
+ 183   2            inDex1=KEY_NULL;
+ 184   2            mKey.LongPress_Time=LONGPRESSTIME;
+ 185   2            break;
+ 186   2          
+ 187   2        }
+ 188   1      }
+ 189          
+ 190          void PPT_PRESS(void)
+ 191          {
+ 192   1        if(PPT==0)
+ 193   1        {   
+ 194   2          if(mMenu.isTx==0)
+ 195   2          {
+ 196   3            MenuOperate(KEY_PPT_DN);
+ 197   3          }
+ 198   2          while(PPT==0);
+ 199   2        }
+ 200   1        else
+ 201   1        { 
+ 202   2          if(mMenu.isTx==1)
+ 203   2          {
+ 204   3            MenuOperate(KEY_PPT_UP);
+ 205   3          }
+ 206   2        }
+ 207   1      }
+ 208          /*-------------------------------------------------------------------------
+ 209          *函数：InitKey  按键参数初使化
+ 210          *参数：无  
+ 211          *返回值：无
+ 212          *-------------------------------------------------------------------------*/
+ 213          void InitKey()
+ 214          {
+ 215   1        mKey.KeyIndex1=0;
+ 216   1        mKey.Power_Time=20;
+ 217   1        mKey.DoublePress_Limit=3;
+ 218   1        mKey.DoublePress_Count=0;
+ 219   1        mKey.Press_Count=0; 
+ 220   1        mKey.MutePress_Timelimit=20;
+ 221   1        mKey.LongPress_Time=LONGPRESSTIME;
+ 222   1        mKey.MutePress_Count=0;
+ 223   1        mKey.MuteDoublePress_Timelimit=20;
+ 224   1        mMenu.Back_Channel_Time=BACK_TIME;
+ 225   1        mMenu.MenuIndex=0;
+ 226   1        mMenu.MenuIndex=0;  
+ 227   1        mMenu.emgIndex=0;
+ 228   1        mMenu.isTx=0; 
+ 229   1        mSqParam.Scan = 0;
+ 230   1        mSqParam.ScanHould = 1;
+ 231   1        mTimer.ScanHouldTime = SCAN_HOULD_TIME;
+ 232   1      }
+ 233          /*-------------------------------------------------------------------------
+ 234          *函数：playButtonTone  按键音
+ 235          *参数：无  
+ 236          *返回值：无
+ 237          *-------------------------------------------------------------------------*/
+ 238          void playButtonTone(void)
+ 239          {
+ 240   1      
+C51 COMPILER V9.52.0.0   KEY                                                               06/02/2018 13:38:55 PAGE 5   
+
+ 241   1        if(mSysParam.SpkOpen ==1)return;
+ 242   1        if(mCbParam.ButtonToneSwitch) 
+ 243   1        { 
+ 244   2          xPWMCN |= 0x10;
+ 245   2          //SPK_EN=1;
+ 246   2          mSysParam.isButtonTone=1;
+ 247   2          mTimer.ButtonToneTime=BUTTONTONE_TIME;
+ 248   2        }
+ 249   1      }
+ 250          
+ 251          
+ 252          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1053    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     12       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

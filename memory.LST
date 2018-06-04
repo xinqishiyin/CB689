@@ -1,0 +1,335 @@
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MEMORY
+OBJECT MODULE PLACED IN memory.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE memory.c LARGE OPTIMIZE(6,SPEED) BROWSE INCDIR(G:\CB589P) DEBUG OBJECTEXTEN
+                    -D TABS(2)
+
+line level    source
+
+   1          #include "system.h"
+   2          #include "memory.h"
+   3          #include "at24c08.h"
+   4          #include "vco.h"
+   5          
+   6          /***************************************修改记录***************************************************** 
+   7           Function List：
+   8              1、saveData            按地址保存数据到存储器
+   9              2、loadData            按地址从存储器读取数据
+  10              3、setDefaultParam     初使化参数数据
+  11              4、saveAllParam        保存所有参数数据
+  12              5、checkAllParam       检验加载的参数数据
+  13              6、loadAllParam        加载数据
+  14              7、initMemory          初使读取存储器功能参数   
+  15           Change Log:
+  16          
+  17          
+  18          ****************************************************************************************************/
+  19          
+  20          u8 sisessce=1;
+  21          
+  22          /*-------------------------------------------------------------------------
+  23          *函数：saveData  保存数据
+  24          *参数：addr 地址  数据  
+  25          *返回值：无
+  26          *-------------------------------------------------------------------------*/
+  27          void saveData(u16 addr, u8 dat)
+  28          {
+  29   1        u8 page;
+  30   1        page = addr/256;
+  31   1        switch(page)
+  32   1        {
+  33   2          case 0:page = AT24C08_PAGE0;break;
+  34   2          case 1:page = AT24C08_PAGE1;break;
+  35   2          case 2:page = AT24C08_PAGE2;break;
+  36   2          case 3:page = AT24C08_PAGE3;break;
+  37   2        }
+  38   1        EA = 0;
+  39   1        eepromWriteByte(page,addr%256,dat);
+  40   1        EA = 1; 
+  41   1      }
+  42          
+  43          /*-------------------------------------------------------------------------
+  44          *函数：loadData  读取数据
+  45          *参数：addr 地址   
+  46          *返回值：数据
+  47          *-------------------------------------------------------------------------*/
+  48          unsigned char loadData(u16 addr)
+  49          {
+  50   1        u8 dat,page;
+  51   1        page = addr/256;
+  52   1        switch(page)
+  53   1        {
+  54   2          case 0:page = AT24C08_PAGE0;break;
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 2   
+
+  55   2          case 1:page = AT24C08_PAGE1;break;
+  56   2          case 2:page = AT24C08_PAGE2;break;
+  57   2          case 3:page = AT24C08_PAGE3;break;
+  58   2        }
+  59   1        EA = 0;
+  60   1        dat = eepromReadByte(page,addr%256);
+  61   1        EA = 1; 
+  62   1        return dat; 
+  63   1      }
+  64          
+  65          void initFlag()
+  66          { 
+  67   1        //mCbParam.UartTxBuf[0] = 0xFE;
+  68   1        mVcoParam.NDIV_FRE=128;
+  69   1        mSysParam.isMute=0;
+  70   1        mSysParam.Rssi=0;
+  71   1        mSysParam.SpkOpen=0;
+  72   1        mSqParam.Scan=1;
+  73   1        mSqParam.ScanHould=1;
+  74   1        mSysParam.MinChannel = 1;
+  75   1        mSqParam.HouldTime=0; 
+  76   1        mReceivePackage.RecvStatus=UART0_IDLE;
+  77   1        mReceivePackage.RecvCount=0;
+  78   1        mReceivePackage.isSendData=0;
+  79   1        mReceivePackage.isReciveData=0;
+  80   1      }
+  81          
+  82          /*-------------------------------------------------------------------------
+  83          *函数：setDefaultParam  默认设置
+  84          *参数：无   
+  85          *返回值：无
+  86          *-------------------------------------------------------------------------*/
+  87          void setDefaultParam(void)
+  88          { 
+  89   1        mCbParam.FreqCal=0;
+  90   1        mCbParam.CountryTable = 2;
+  91   1        mCbParam.Country = COUNTRY_EU;
+  92   1        mCbParam.Band = 0;
+  93   1        mCbParam.Channel = 9;
+  94   1        mCbParam.Modu = FM;
+  95   1        mCbParam.TxPower = POWER_LOW;
+  96   1        mCbParam.VolLevel = 5;
+  97   1        mCbParam.LastChannel=mCbParam.Channel ;
+  98   1        mSqParam.IsAsq = 0;
+  99   1        mSqParam.IsVox = 0;
+ 100   1        mSqParam.AsqLevel = 3;  
+ 101   1        mSqParam.Scan=0;
+ 102   1        mSqParam.ScanDir=0;
+ 103   1        mSqParam.ScanHould=1; 
+ 104   1        mCbParam.SpkerSwitch = 1;
+ 105   1        mCbParam.LcdColor = 7;
+ 106   1        mCbParam.ButtonToneSwitch = 1;  
+ 107   1      }
+ 108          /*-------------------------------------------------------------------------
+ 109          *函数：saveAllParam  保存功能信息
+ 110          *参数：无   
+ 111          *返回值：无
+ 112          *-------------------------------------------------------------------------*/
+ 113          void saveAllParam(void)
+ 114          {
+ 115   1        saveData(EEP_BASE,0xa5);
+ 116   1        saveData(EEP_COUNTRY_TB,mCbParam.CountryTable);
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 3   
+
+ 117   1        saveData(EEP_COUNTRY,mCbParam.Country);       
+ 118   1        saveData(EEP_BAND,mCbParam.Band);   
+ 119   1        saveData(EEP_CHANNEL,mCbParam.Channel);   
+ 120   1        saveData(EEP_MODU,mCbParam.Modu);   
+ 121   1        saveData(EEP_POWER,mCbParam.TxPower);
+ 122   1        saveData(EEP_VOL,mCbParam.VolLevel);
+ 123   1        saveData(EEP_LAST_CH,mCbParam.LastChannel); 
+ 124   1        saveData(EEP_LCD_COLOR,mCbParam.LcdColor);    
+ 125   1        saveData(EEP_TONE_SW,mCbParam.ButtonToneSwitch);
+ 126   1        saveData(EEP_SPK_SW,mCbParam.SpkerSwitch);  
+ 127   1        saveData(EEP_IS_ASQ,mSqParam.IsAsq);
+ 128   1        saveData(EEP_IS_VOX,mSqParam.IsVox);
+ 129   1        saveData(EEP_ASQ_LEVEL,mSqParam.AsqLevel);
+ 130   1      }
+ 131          /*-------------------------------------------------------------------------
+ 132          *函数：checkAllParam  验证加载信息
+ 133          *参数：无   
+ 134          *返回值：无
+ 135          *-------------------------------------------------------------------------*/
+ 136          void checkAllParam(void)
+ 137          { 
+ 138   1        switch(mCbParam.Country)
+ 139   1        {
+ 140   2          case COUNTRY_EU: mSysParam.MaxChannel = 40;mCbParam.Band=0;break;
+ 141   2          case COUNTRY_CE: mSysParam.MaxChannel = 40;mCbParam.Band=0;break;
+ 142   2          case COUNTRY_UK: mSysParam.MaxChannel = 40;mCbParam.Band=0;break;
+ 143   2          case COUNTRY_PL: mSysParam.MaxChannel = 40;mCbParam.Band=0;break;
+ 144   2          case COUNTRY_I0: mSysParam.MaxChannel = 40;mCbParam.Band=0;break;   
+ 145   2          case COUNTRY_RU:
+ 146   2            if(mCbParam.Band>9) mCbParam.Band=0;
+ 147   2            mSysParam.MaxChannel = 40;
+ 148   2            break;    
+ 149   2          case COUNTRY_I2: mSysParam.MaxChannel = 34;mCbParam.Band=0;break;
+ 150   2          case COUNTRY_DE: mSysParam.MaxChannel = 80;mCbParam.Band=0;break;
+ 151   2          case COUNTRY_IN: mSysParam.MaxChannel = 27;mCbParam.Band=0;break;
+ 152   2          case COUNTRY_HX:
+ 153   2            if(mCbParam.Band>8) mCbParam.Band=0;
+ 154   2            if(mCbParam.Band==8) mSysParam.MaxChannel = 20;
+ 155   2            else  mSysParam.MaxChannel = 40;
+ 156   2          break;    
+ 157   2        } 
+ 158   1        if(mCbParam.CountryTable > 2)mCbParam.CountryTable = 1; 
+ 159   1        else if (mCbParam.CountryTable==0) mCbParam.CountryTable = 1; 
+ 160   1        if (((mCbParam.Country > 7)&&(mCbParam.Country!=COUNTRY_RU)&&(mCbParam.Country!=COUNTRY_HX)) || (mCbParam
+             -.Country < 0))mCbParam.Country = 0;
+ 161   1        
+ 162   1        
+ 163   1        mSysParam.ActivityChannel = mCbParam.Channel;
+ 164   1        if ((mCbParam.Channel > mSysParam.MaxChannel) || (mCbParam.Channel < mSysParam.MinChannel))mCbParam.Chann
+             -el = mSysParam.MinChannel;
+ 165   1        if ((mSysParam.LastChannel < mSysParam.MinChannel) || (mSysParam.LastChannel > mSysParam.MaxChannel))
+ 166   1        {
+ 167   2          mSysParam.LastChannel = mCbParam.Channel;
+ 168   2          mSysParam.ActivityChannel = mSysParam.LastChannel;
+ 169   2        }
+ 170   1        if (mCbParam.VolLevel > 9) mCbParam.VolLevel = 5;
+ 171   1        if (mCbParam.TxPower > POWER_HIGH)mCbParam.TxPower = POWER_HIGH;
+ 172   1        if ((mSqParam.IsAsq > 1))mSqParam.IsAsq = 0;
+ 173   1        if ((mSqParam.IsVox > 1))mSqParam.IsVox = 0;
+ 174   1        if (mSqParam.AsqLevel > 5) mSqParam.AsqLevel = 1;
+ 175   1        if (mCbParam.LcdColor > 7) mCbParam.LcdColor = 7;
+ 176   1        if (mSysParam.HitPower > 0) mSysParam.HitPower = 1; 
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 4   
+
+ 177   1        
+ 178   1        mSysParam.rest=0;
+ 179   1      }
+ 180          void checkTb()
+ 181          {
+ 182   1        if(OP1)
+ 183   1        {
+ 184   2          if(OP2)                                     //OP1=1   OP2=1
+ 185   2          {
+ 186   3            if(mCbParam.CountryTable!=1||mCbParam.Country>7||mCbParam.TxPower == POWER_HIGH)
+ 187   3            {
+ 188   4              mCbParam.TxPower=POWER_LOW;
+ 189   4              mCbParam.CountryTable=1;
+ 190   4              mCbParam.Country=COUNTRY_EU;
+ 191   4              mCbParam.Band=0;
+ 192   4              mCbParam.Channel=9;
+ 193   4              mCbParam.Modu=FM;   
+ 194   4            }
+ 195   3          }
+ 196   2          else                                        //OP1=1  OP2=0
+ 197   2          {
+ 198   3            if(mCbParam.CountryTable!=2||mCbParam.Country!=COUNTRY_RU)
+ 199   3            {
+ 200   4              mCbParam.CountryTable=2;
+ 201   4              mCbParam.Country=COUNTRY_RU;
+ 202   4              mCbParam.Band=3;      
+ 203   4              mCbParam.Channel=9;
+ 204   4              mCbParam.Modu=FM;         
+ 205   4            }     
+ 206   3          }
+ 207   2        }
+ 208   1        else
+ 209   1        {
+ 210   2          if(OP2)                                     //OP1=0   OP2=1
+ 211   2          {
+ 212   3            if(mCbParam.CountryTable!=2||mCbParam.Country!=COUNTRY_HX)
+ 213   3            {
+ 214   4              mCbParam.CountryTable=2;
+ 215   4              mCbParam.Country=COUNTRY_HX;
+ 216   4              mCbParam.Band=3;      
+ 217   4              mCbParam.Channel=9;
+ 218   4              mCbParam.Modu=FM;         
+ 219   4            } 
+ 220   3          }
+ 221   2          else                                        //OP1=0   OP2=0
+ 222   2          {
+ 223   3            if(mCbParam.CountryTable!=2||mCbParam.Country>7)
+ 224   3            {
+ 225   4              mCbParam.CountryTable=2;
+ 226   4              mCbParam.Country=COUNTRY_EU;
+ 227   4              mCbParam.Band=3;      
+ 228   4              mCbParam.Channel=9;
+ 229   4              mCbParam.Modu=FM;         
+ 230   4            } 
+ 231   3          }
+ 232   2        }
+ 233   1      }
+ 234          
+ 235          
+ 236          /*-------------------------------------------------------------------------
+ 237          *函数：loadAllParam  加载功能信息
+ 238          *参数：无   
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 5   
+
+ 239          *返回值：无
+ 240          *-------------------------------------------------------------------------*/
+ 241          void loadAllParam(void)
+ 242          {
+ 243   1        u8 dat;
+ 244   1        initFlag();
+ 245   1        dat=loadData(EEP_BASE);
+ 246   1        dat=loadData(EEP_BASE);
+ 247   1        dat=loadData(EEP_BASE);
+ 248   1        dat=loadData(EEP_BASE);
+ 249   1        if(loadData(EEP_BASE) != 0xa5)
+ 250   1        {
+ 251   2          setDefaultParam();
+ 252   2          saveAllParam();
+ 253   2        }
+ 254   1        else
+ 255   1        {   
+ 256   2          mCbParam.CountryTable = loadData(EEP_COUNTRY_TB);
+ 257   2          mCbParam.Country = loadData(EEP_COUNTRY);
+ 258   2          mCbParam.Band = loadData(EEP_BAND);
+ 259   2          mCbParam.LastBand=mCbParam.Band;    
+ 260   2          mCbParam.Channel = loadData(EEP_CHANNEL);   
+ 261   2          mSysParam.LastChannel=mCbParam.Channel;
+ 262   2          mCbParam.LastChannel=0x09 ;
+ 263   2          mCbParam.Modu = loadData(EEP_MODU);
+ 264   2          mCbParam.TxPower = loadData(EEP_POWER);
+ 265   2          mCbParam.VolLevel = loadData(EEP_VOL);
+ 266   2          mSqParam.IsAsq = loadData(EEP_IS_ASQ);
+ 267   2          mSqParam.IsVox = loadData(EEP_IS_VOX);
+ 268   2          mSqParam.AsqLevel = loadData(EEP_ASQ_LEVEL);  
+ 269   2          mCbParam.SpkerSwitch = loadData(EEP_SPK_SW);
+ 270   2          mCbParam.LcdColor = loadData(EEP_LCD_COLOR);    
+ 271   2          mCbParam.ButtonToneSwitch = loadData(EEP_TONE_SW);
+ 272   2          mSysParam.LastChannel = loadData(EEP_LAST_CH);  
+ 273   2          
+ 274   2        }
+ 275   1        checkAllParam();
+ 276   1        checkTb();
+ 277   1      }
+ 278          /*-------------------------------------------------------------------------
+ 279          *函数：ResetParam  初使化设置
+ 280          *参数：无   
+ 281          *返回值：无
+ 282          *-------------------------------------------------------------------------*/
+ 283          void ResetParam()
+ 284          {
+ 285   1        setDefaultParam();
+ 286   1        saveAllParam();
+ 287   1      }
+ 288          
+ 289          /*-------------------------------------------------------------------------
+ 290          *函数：initMemory  初使加载功能信息
+ 291          *参数：无   
+ 292          *返回值：无
+ 293          *-------------------------------------------------------------------------*/
+ 294          void initMemory(void)
+ 295          {
+ 296   1        initAt24c08();
+ 297   1        loadAllParam();
+ 298   1        calculateFreq();              //计算频率
+ 299   1      }
+
+C51 COMPILER V9.52.0.0   MEMORY                                                            06/02/2018 13:38:56 PAGE 6   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1283    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      1       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

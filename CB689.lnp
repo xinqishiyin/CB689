@@ -1,0 +1,5 @@
+"main.obj",
+"system.obj" 
+TO "CB589P" 
+RAMSIZE(256) 
+DISABLEWARNING (16) 
